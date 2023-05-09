@@ -22,7 +22,6 @@ const ProfileScreen = ({ navigation }) => {
 	const dispatch = useDispatch()
 	const user = useSelector(getUser)
 	const { avatar, login, posts } = user
-	console.log(posts)
 
 	const goToMap = (item) => {
 		item.nameLoc === null
