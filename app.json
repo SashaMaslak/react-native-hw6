@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "react-native-hw5",
+    "slug": "react-native-hw5",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
+        }
+      ]
+    ],
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "jsEngine": "hermes",
+    "ios": {
+      "jsEngine": "jsc",
+      "supportsTablet": true
+    },
+    "android": {
+      "jsEngine": "jsc",
+      "permissions": [
+    "ACCESS_FINE_LOCATION"
+  ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDST6D-B71Qqx0lQes27QijhIe9bJxRR3E"
+        }
+      },
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.owmaslak.reactnativehw5"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9d889648-4b66-49a4-95ac-23ce4befb7f0"
+      }
+    },
+    "owner": "owmaslak"
+  }
+}
