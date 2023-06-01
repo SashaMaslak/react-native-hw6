@@ -15,48 +15,56 @@ import { FontAwesome } from "@expo/vector-icons"
 import { AntDesign } from "@expo/vector-icons"
 import Btn from "../../components/Btn"
 import { nanoid } from "nanoid"
+import { db } from "../../firebase/firebase.config"
+import { storage } from "../../firebase/firebase.config"
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage"
+import { collection, addDoc } from "firebase/firestore"
+import { useSelector } from "react-redux"
+import { getUser } from "../../redux/auth/selectors"
 
 const initialPost = {
-	id: "",
 	name: null,
 	photo: null,
 	location: [],
-	comments: [
-		{
-			id: "1",
-			owner: "follower",
-			comment:
-				"Really love your most recent photo. I’ve been trying to capture the same thing for a few months and would love some tips",
-			date: "09 июня, 2020 | 08:40",
-		},
-		{
-			id: "2",
-			owner: "user",
-			comment:
-				"A fast 50mm like f1.8 would help with the bokeh. I’ve been using primes as they tend to get a bit sharper images.",
-			date: "09 июня, 2020 | 09:14",
-		},
-		{
-			id: "3",
-			owner: "follower",
-			comment: "Thank you! That was very helpful!",
-			date: "09 июня, 2020 | 09:20",
-		},
-	],
-	likes: 153,
+	comments: [],
+	likes: 0,
 }
 
 export default function DefaultCreatePostsScreen({ navigation, route }) {
-	const [hasPermissionCam, setHasPermissionCam] = useState(null)
-	const [cameraRef, setCameraRef] = useState(null)
+	const [progress, setProgress] = useState(0)
 	const [photo, setPhoto] = useState(null)
+	const [urlPhoto, setUrlPhoto] = useState(null)
+	const [docRefId, setDocRefId] = useState(null)
 	const [defLocation, setDefLocation] = useState(null)
 	const [valueName, setValueName] = useState(null)
 	const [valueLoc, setValueLoc] = useState(null)
 	const [post, setPost] = useState(initialPost)
 	let isVisibleKeyboard = useKeyboardVisible()
+	const user = useSelector(getUser)
 
 	let routeData = route.params
+
+	const uploadPhotoToServer = async (photo) => {
+		const photoId = nanoid()
+		const storageRef = ref(storage, `postImg/${photoId}`)
+		const uploadTask = uploadBytesResumable(storageRef, photo)
+
+		uploadTask.on(
+			"state_changed",
+			(snapshot) => {
+				const prog = Math.round(
+					(snapshot.bytesTransferred / snapshot.totalBytes) * 100
+				)
+				setProgress(prog)
+			},
+			(err) => console.log(err),
+			() => {
+				getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+					setUrlPhoto(url)
+				})
+			}
+		)
+	}
 
 	useEffect(() => {
 		if (routeData === undefined) return
@@ -69,6 +77,7 @@ export default function DefaultCreatePostsScreen({ navigation, route }) {
 					photo: route.params.photo,
 					location: route.params.location,
 				}))
+				uploadPhotoToServer(photo)
 			} else {
 				setPhoto(null)
 				setDefLocation(null)
@@ -83,7 +92,6 @@ export default function DefaultCreatePostsScreen({ navigation, route }) {
 			name: valueName,
 			location: defLocation,
 			nameLoc: valueLoc,
-			id: nanoid(),
 		}))
 	}, [valueName, valueLoc])
 
@@ -100,12 +108,32 @@ export default function DefaultCreatePostsScreen({ navigation, route }) {
 		setPost(initialPost)
 	}
 
+	const uploadPostToServer = () => {
+		const createdPost = {
+			...post,
+			photo: urlPhoto,
+			nickname: user.login,
+			userId: user.id,
+		}
+		const writeDataToFirestore = async () => {
+			try {
+				const docRef = await addDoc(collection(db, "posts"), createdPost)
+				console.log("Document written with ID: ", docRef.id)
+				setDocRefId(docRef.id)
+			} catch (e) {
+				console.error("Error adding document: ", e)
+				throw e
+			}
+		}
+		writeDataToFirestore()
+	}
+
 	const handlePressBtn = () => {
 		setPost((prevState) => ({
 			...prevState,
-			id: nanoid(),
 		}))
-		navigation.navigate("Posts", post)
+		uploadPostToServer()
+		navigation.navigate("Posts", docRefId)
 		routeData = undefined
 		setPhoto(null)
 		setDefLocation(null)
@@ -253,12 +281,14 @@ export default function DefaultCreatePostsScreen({ navigation, route }) {
 						/>
 					</View>
 				</View>
-				<TouchableOpacity
-					style={styles.deleteBtnWrapper}
-					onPress={handleDeletePost}
-				>
-					<AntDesign name="delete" size={24} color="#a9a9a9" />
-				</TouchableOpacity>
+				{isVisibleKeyboard ? null : (
+					<TouchableOpacity
+						style={styles.deleteBtnWrapper}
+						onPress={handleDeletePost}
+					>
+						<AntDesign name="delete" size={24} color="#a9a9a9" />
+					</TouchableOpacity>
+				)}
 			</View>
 		</TouchableWithoutFeedback>
 	)

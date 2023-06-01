@@ -12,19 +12,20 @@ import { FontAwesome } from "@expo/vector-icons"
 import { SimpleLineIcons } from "@expo/vector-icons"
 import { AntDesign } from "@expo/vector-icons"
 import { useSelector, useDispatch } from "react-redux"
-import { getPosts, getUser } from "../../redux/user/selectors"
-import { addPost } from "../../redux/user/slice"
+import { getUser } from "../../redux/auth/selectors"
+import { getPosts } from "../../redux/posts/selectors"
+import { getPostsFromFirestore } from "../../redux/posts/postsOperations"
 
 const DefaultPostsScreen = ({ route, navigation }) => {
 	const dispatch = useDispatch()
-	const user = useSelector(getUser)
-	const posts = useSelector(getPosts)
+	const docRefId = route.params
 
 	useEffect(() => {
-		if (route.params) {
-			dispatch(addPost(route.params))
-		}
-	}, [route.params])
+		dispatch(getPostsFromFirestore())
+	}, [docRefId])
+
+	const user = useSelector(getUser)
+	const posts = useSelector(getPosts)
 
 	const goToMap = (item) => {
 		item.nameLoc === null
@@ -35,7 +36,7 @@ const DefaultPostsScreen = ({ route, navigation }) => {
 	return (
 		<View style={styles.container}>
 			<View style={styles.userBlock}>
-				<Image source={user.avatar} style={styles.userAv} />
+				<Image source={user.avatar || ""} style={styles.userAv} />
 				<View style={styles.userInfo}>
 					<Text style={{ fontSize: 16, fontWeight: 700 }}>{user.login}</Text>
 					<Text style={styles.userInfo}>{user.email}</Text>
@@ -60,7 +61,9 @@ const DefaultPostsScreen = ({ route, navigation }) => {
 									onPress={() => navigation.navigate("Comments", item)}
 								>
 									<FontAwesome name="comment-o" size={24} color="#a9a9a9" />
-									<Text style={styles.comImage}>{item.comments.length}</Text>
+									<Text style={styles.comImage}>
+										{item.comments ? item.comments.length : 0}
+									</Text>
 									<AntDesign name="like2" size={24} color="#a9a9a9" />
 									<Text style={styles.comImage}>{item.likes}</Text>
 								</TouchableOpacity>
@@ -150,3 +153,23 @@ const styles = StyleSheet.create({
 		marginHorizontal: 8,
 	},
 })
+
+// const getPostsFromFirestore = async () => {
+// 	try {
+// 		const q = query(
+// 			collection(db, "posts") /*, where("capital", "==", true)*/
+// 		)
+// 		const querySnapshot = await getDocs(q)
+
+// 		querySnapshot.forEach((doc) => {
+// 			const postOnServer = { ...doc.data(), id: doc.id }
+// 			setPosts((prevState) => {
+// 				const ps = prevState.map((item) => item.id).includes(postOnServer.id)
+// 				if (ps) return
+// 				return [...prevState, postOnServer]
+// 			})
+// 		})
+// 	} catch (error) {
+// 		console.log(error)
+// 	}
+// }

@@ -1,29 +1,30 @@
 import { Text, View, StyleSheet, Keyboard } from "react-native"
-import { useSelector, useDispatch } from "react-redux"
-import { getUser } from "../redux/user/selectors"
-import { changeIsLoggedIn, createUser, setAvatar } from "../redux/user/slice"
+import { useDispatch } from "react-redux"
+import { setAvatar } from "../redux/auth/authSlice"
+import { signUp, signIn } from "../redux/auth/authOperation"
 import Btn from "./Btn"
 
-const initialAv = require("../assets/user.png")
-
 const LoginBlock = ({ nav, titleBtn, text, clearInputs, credentials }) => {
-	const user = useSelector(getUser)
 	const dispatch = useDispatch()
+
 	const handlePressBtn = () => {
 		const values = Object.values(credentials)
-
+		const keys = Object.keys(credentials)
 		if (values.includes("")) {
 			return alert("To fill every field!")
 		}
 
-		clearInputs()
-		Keyboard.dismiss()
-		dispatch(createUser(credentials))
-		dispatch(changeIsLoggedIn(true))
-		if (credentials.hasOwnProperty("avatar")) {
-			dispatch(setAvatar(initialAv))
+		// if (credentials.hasOwnProperty("avatar")) {
+		// 	dispatch(setAvatar(initialAv))
+		// }
+		if (keys.includes("login")) {
+			dispatch(signUp(credentials))
+		} else {
+			dispatch(signIn(credentials))
 		}
 
+		Keyboard.dismiss()
+		clearInputs()
 		nav("Home")
 	}
 

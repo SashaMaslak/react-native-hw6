@@ -6,14 +6,16 @@ import { MaterialIcons } from "@expo/vector-icons"
 import { Ionicons } from "@expo/vector-icons"
 import { TouchableOpacity, StyleSheet } from "react-native"
 import { useSelector, useDispatch } from "react-redux"
-import { getIsLoggedIn, getUser } from "../../redux/user/selectors"
-import { changeIsLoggedIn } from "../../redux/user/slice"
-
+import { getIsLoggedIn, getUser } from "../../redux/auth/selectors"
 import RegistrationSrceen from "../../Screens/auth/RegistrationSrceen"
 import LoginSrceen from "../../Screens/auth/LoginScreen"
 import CreatePostsScreen from "./CreatePostsScreen"
 import ProfileScreen from "../../Screens/main/ProfileScreen"
 import PostsScreen from "../../Screens/main/PostsScreen"
+import { signOut, onChange } from "../../redux/auth/authOperation"
+import { useEffect } from "react"
+import { onAuthStateChanged } from "firebase/auth"
+import { auth } from "../../firebase/firebase.config"
 
 const AuthStack = createStackNavigator()
 const MainTab = createBottomTabNavigator()
@@ -21,15 +23,12 @@ const MainTab = createBottomTabNavigator()
 const Home = () => {
 	const dispatch = useDispatch()
 	const isLoggedIn = useSelector(getIsLoggedIn)
-	const user = useSelector(getUser)
 
-	const changeVisibleTabBar = (onChange) => {
-		onChange = !onChange
-	}
-
-	const handleLogIn = () => {
-		dispatch(changeIsLoggedIn(true))
-	}
+	useEffect(() => {
+		onAuthStateChanged(auth, (currentUser) => {
+			if (currentUser) dispatch(onChange(currentUser))
+		})
+	}, [])
 
 	if (!isLoggedIn) {
 		return (
@@ -90,7 +89,9 @@ const Home = () => {
 						<TouchableOpacity
 							style={{ marginRight: 10 }}
 							activeOpacity={0.7}
-							onPress={() => dispatch(changeIsLoggedIn(false))}
+							onPress={() => {
+								dispatch(signOut())
+							}}
 						>
 							<MaterialIcons name="logout" size={24} color="black" />
 						</TouchableOpacity>
@@ -116,7 +117,7 @@ const Home = () => {
 				name="CreatePost"
 				component={CreatePostsScreen}
 				options={() => ({
-					tabBarStyle: { display: "none" },
+					//tabBarStyle: { display: "none" },
 					headerShown: true,
 				})}
 			></MainTab.Screen>

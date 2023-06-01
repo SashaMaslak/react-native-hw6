@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import {
 	StyleSheet,
 	Text,
@@ -15,13 +16,22 @@ import { SimpleLineIcons } from "@expo/vector-icons"
 import { AntDesign } from "@expo/vector-icons"
 import { MaterialIcons } from "@expo/vector-icons"
 import { useSelector, useDispatch } from "react-redux"
-import { getUser } from "../../redux/user/selectors"
-import { changeIsLoggedIn } from "../../redux/user/slice"
+import { getUser } from "../../redux/auth/selectors"
+import { getPosts } from "../../redux/posts/selectors"
+import { signOut } from "../../redux/auth/authOperation"
+import { getPostsFromFirestoreByUserId } from "../../redux/posts/postsOperations"
 
-const ProfileScreen = ({ navigation }) => {
+const ProfileScreen = ({ route, navigation }) => {
 	const dispatch = useDispatch()
 	const user = useSelector(getUser)
-	const { avatar, login, posts } = user
+	const { avatar, login, id } = user
+	const docRefId = route.params
+
+	useEffect(() => {
+		dispatch(getPostsFromFirestoreByUserId(id))
+	}, [docRefId])
+
+	const posts = useSelector(getPosts)
 
 	const goToMap = (item) => {
 		item.nameLoc === null
@@ -39,7 +49,7 @@ const ProfileScreen = ({ navigation }) => {
 					<ScrollView>
 						<View style={styles.form}>
 							<View style={styles.avatar}>
-								<ImageBackground style={styles.bg} source={avatar}>
+								<ImageBackground style={styles.bg} source={avatar || ""}>
 									{avatar ? (
 										<View style={styles.btnAvatar}>
 											<AntDesign
@@ -58,7 +68,7 @@ const ProfileScreen = ({ navigation }) => {
 							<TouchableOpacity
 								style={styles.logoutBtn}
 								activeOpacity={0.7}
-								onPress={() => dispatch(changeIsLoggedIn(false))}
+								onPress={() => dispatch(signOut())}
 							>
 								<MaterialIcons name="logout" size={32} color="#a9a9a9" />
 							</TouchableOpacity>

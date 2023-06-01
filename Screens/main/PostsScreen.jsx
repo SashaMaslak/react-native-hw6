@@ -3,7 +3,7 @@ import { createStackNavigator } from "@react-navigation/stack"
 import { MaterialIcons } from "@expo/vector-icons"
 import { Ionicons } from "@expo/vector-icons"
 import { useDispatch } from "react-redux"
-import { changeIsLoggedIn } from "../../redux/user/slice"
+import { signOut } from "../../redux/auth/authOperation"
 
 import DefaultPostsScreen from "../nested/DefaultPostsScreen"
 import MapScreen from "../nested/MapScreen"
@@ -25,7 +25,7 @@ const PostsScreen = () => {
 						<TouchableOpacity
 							style={{ marginRight: 10 }}
 							activeOpacity={0.7}
-							onPress={() => dispatch(changeIsLoggedIn(false))}
+							onPress={() => dispatch(signOut())}
 						>
 							<MaterialIcons name="logout" size={24} color="black" />
 						</TouchableOpacity>

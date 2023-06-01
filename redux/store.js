@@ -1,10 +1,10 @@
-import { configureStore, combineRedusers } from "@reduxjs/toolkit"
-import { userSlice } from "./user/slice"
-import { authSlice } from "./auth/authSlice"
+import { configureStore, combineReducers } from "@reduxjs/toolkit"
+import { authReducer, authSlice } from "./auth/authSlice"
+import { postsReducer, postsSlice } from "./posts/postsSlice"
 
-const rootReduser = combineRedusers({
-	[authSlice.name]: authSlice.reducer,
-	[userSlice.name]: userSlice.reducer,
+const rootReduser = combineReducers({
+	[authSlice.name]: authReducer,
+	[postsSlice.name]: postsReducer,
 })
 
 export const store = configureStore({

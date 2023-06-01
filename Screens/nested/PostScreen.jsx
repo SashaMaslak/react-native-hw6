@@ -1,20 +1,24 @@
+import { useState } from "react"
 import {
 	View,
 	StyleSheet,
 	ImageBackground,
 	TouchableOpacity,
 	Text,
+	Alert,
 } from "react-native"
 import { FontAwesome } from "@expo/vector-icons"
 import { SimpleLineIcons } from "@expo/vector-icons"
 import { AntDesign } from "@expo/vector-icons"
 import { useSelector, useDispatch } from "react-redux"
-import { getUser, getPosts } from "../../redux/user/selectors"
-import { deletePost } from "../../redux/user/slice"
+import { getUser } from "../../redux/auth/selectors"
+import { getPosts } from "../../redux/posts/selectors"
+import { doc, deleteDoc } from "firebase/firestore"
+import { db } from "../../firebase/firebase.config"
 
 const PostScreen = ({ route, navigation }) => {
 	const dispatch = useDispatch()
-
+	const [showBox, setShowBox] = useState(false)
 	const user = useSelector(getUser)
 	const posts = useSelector(getPosts)
 	const post = route.params
@@ -22,15 +26,42 @@ const PostScreen = ({ route, navigation }) => {
 	const idPost = post.id
 	const idx = posts.findIndex((el) => el.id === idPost)
 
-	const handleDeletePost = () => {
-		dispatch(deletePost(idx))
-		navigation.navigate("Posts")
+	const handleDeletePost = async () => {
+		try {
+			await deleteDoc(doc(db, "posts", `${idPost}`))
+			navigation.navigate("Posts")
+		} catch (e) {
+			console.error("Error adding document: ", e)
+			throw e
+		}
 	}
 
 	const goToMap = (post) => {
 		nameLoc === null
 			? alert("Location is not established")
 			: navigation.navigate("Map", post)
+	}
+
+	const showConfirmDialog = () => {
+		return Alert.alert(
+			"Are your sure?",
+			"Are you sure you want to remove this post?",
+			[
+				// The "Yes" button
+				{
+					text: "Yes",
+					onPress: () => {
+						handleDeletePost()
+						setShowBox(false)
+					},
+				},
+				// The "No" button
+				// Does nothing but dismiss the dialog when tapped
+				{
+					text: "No",
+				},
+			]
+		)
 	}
 
 	return (
@@ -73,7 +104,8 @@ const PostScreen = ({ route, navigation }) => {
 			</View>
 			<TouchableOpacity
 				style={styles.deleteBtnWrapper}
-				onPress={handleDeletePost}
+				onPress={() => showConfirmDialog()}
+				//onPress={handleDeletePost}
 			>
 				<AntDesign name="delete" size={24} color="#a9a9a9" />
 			</TouchableOpacity>
@@ -104,7 +136,6 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 	},
 	deleteBtnWrapper: {
-		//position: "absolute",
 		marginBottom: 22,
 		alignSelf: "center",
 		justifyContent: "flex-end",
@@ -146,5 +177,19 @@ const styles = StyleSheet.create({
 	locImage: {
 		fontSize: 16,
 		marginHorizontal: 8,
+	},
+	screen: {
+		flex: 1,
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	box: {
+		width: 300,
+		height: 300,
+		backgroundColor: "red",
+		marginBottom: 30,
+	},
+	text: {
+		fontSize: 30,
 	},
 })

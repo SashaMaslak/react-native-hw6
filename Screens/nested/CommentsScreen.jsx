@@ -10,44 +10,83 @@ import {
 	Keyboard,
 } from "react-native"
 import { format } from "date-fns"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { AntDesign } from "@expo/vector-icons"
-import { nanoid } from "nanoid"
 import { useSelector, useDispatch } from "react-redux"
-import { getUser, getPosts } from "../../redux/user/selectors"
-import { addComment } from "../../redux/user/slice"
+import { getUser } from "../../redux/auth/selectors"
+import {
+	collection,
+	query,
+	where,
+	getDocs,
+	documentId,
+	addDoc,
+} from "firebase/firestore"
+import { db } from "../../firebase/firebase.config"
 
 const CommentsScreen = ({ route, navigation }) => {
 	const dispatch = useDispatch()
-
+	const [docRefId, setDocRefId] = useState(null)
 	const [isActive, setIsActive] = useState(false)
 	const [comment, setComment] = useState("")
+	const [comments, setComments] = useState([])
+	const user = useSelector(getUser)
+	const post = route.params
+	const postId = route.params.id
+
+	const getCommentsFromFirestore = async () => {
+		try {
+			let comments = []
+			const q = query(collection(db, "posts", postId, "comments"))
+			const querySnapshot = await getDocs(q)
+
+			querySnapshot.forEach((doc) => {
+				const commentOnServer = { ...doc.data(), id: doc.id }
+				comments.push(commentOnServer)
+			})
+			setComments(comments)
+		} catch (error) {
+			console.log(error)
+		}
+	}
+
+	useEffect(() => {
+		getCommentsFromFirestore()
+	}, [docRefId])
 
 	const onFocus = async () => {
 		setIsActive(true)
 	}
-
 	const onBlur = async () => {
 		setIsActive(false)
 	}
 
-	const user = useSelector(getUser)
-	const posts = useSelector(getPosts)
-	const post = route.params
-	const idPost = post.id
-	const foundPost = posts.find((el) => el.id === idPost)
-	const idx = posts.findIndex((el) => el.id === idPost)
-
-	const handleComment = () => {
+	const uploadCommentToServer = () => {
 		if (comment === "") return alert("Please, add to comment")
 		const date = format(new Date(2014, 1, 11), "MM/dd/yyyy")
 		const dataComment = {
-			id: nanoid(),
 			owner: user ? "user" : "follower",
 			comment: comment,
 			date: date,
 		}
-		dispatch(addComment({ dataComment, idx }))
+		const writeDataToFirestore = async () => {
+			try {
+				const docRef = await addDoc(
+					collection(db, "posts", postId, "comments"),
+					dataComment
+				)
+				console.log("Document written with ID: ", docRef.id)
+				setDocRefId(docRef.id)
+			} catch (e) {
+				console.error("Error adding document: ", e)
+				throw e
+			}
+		}
+		writeDataToFirestore()
+	}
+
+	const handleComment = () => {
+		uploadCommentToServer()
 		setComment("")
 		Keyboard.dismiss()
 	}
@@ -56,15 +95,13 @@ const CommentsScreen = ({ route, navigation }) => {
 		<View style={styles.container}>
 			<View style={styles.image}>
 				<ImageBackground
-					source={{
-						uri: post.photo,
-					}}
+					source={{ uri: post.photo }}
 					style={{ flex: 1, width: "100%", height: "100%" }}
 				/>
 			</View>
 
 			<FlatList
-				data={foundPost.comments}
+				data={comments}
 				keyExtractor={(item) => item.id}
 				renderItem={({ item }) => (
 					<View

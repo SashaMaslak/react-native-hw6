@@ -18,6 +18,7 @@ import { useKeyboardVisible } from "../../hooks/useKeyboardVisible"
 
 import Input from "../../components/Input"
 import LoginBlock from "../../components/LoginBlock"
+import { useDispatch } from "react-redux"
 
 const initialStateReg = {
 	avatar: null,
